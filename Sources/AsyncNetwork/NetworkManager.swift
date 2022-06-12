@@ -14,7 +14,7 @@ public final class AsyncNetwork {
         url: URL,
         builder: @escaping (Data) -> Received?,
         session: URLSession = .shared,
-        errorCode: Int?,
+        errorCode: Int? = nil,
         logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
@@ -55,7 +55,7 @@ public final class AsyncNetwork {
         url: URL,
         builder: @escaping (Data) throws -> Received,
         session: URLSession = .shared,
-        errorCode: Int?,
+        errorCode: Int? = nil,
         logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
@@ -75,7 +75,7 @@ public final class AsyncNetwork {
                     let result = try builder(data)
                     return .success(result)
                 } catch {
-                    return .failure(.notExpectedData)
+                    return .failure(.notExpectedDataWithError(error))
                 }
             default:
                 return .failure(.statusCode(response.statusCode))
@@ -97,7 +97,7 @@ public final class AsyncNetwork {
         request: URLRequest,
         builder: @escaping (Data) -> Received?,
         session: URLSession = .shared,
-        errorCode: Int?,
+        errorCode: Int? = nil,
         logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
@@ -138,7 +138,7 @@ public final class AsyncNetwork {
         request: URLRequest,
         builder: @escaping (Data) throws -> Received,
         session: URLSession = .shared,
-        errorCode: Int?,
+        errorCode: Int? = nil,
         logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
@@ -158,7 +158,7 @@ public final class AsyncNetwork {
                     let result = try builder(data)
                     return .success(result)
                 } catch {
-                    return .failure(.notExpectedData)
+                    return .failure(.notExpectedDataWithError(error))
                 }
             default:
                 return .failure(.statusCode(response.statusCode))

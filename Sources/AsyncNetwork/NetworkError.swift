@@ -14,7 +14,7 @@ public enum NetworkError:Error {
     case statusCode(Int)
     case noHTTP
     case notExpectedData
-    case unexpected
+    case notExpectedDataWithError(Error)
     
     public var description:String {
         switch self {
@@ -26,8 +26,8 @@ public enum NetworkError:Error {
             return "Not a valid HTTP request"
         case .notExpectedData:
             return "Not the expected data"
-        case .unexpected:
-            return "unexpected"
+        case .notExpectedDataWithError(let error):
+            return "Not the expected data: \(error)"
         }
     }
 }
