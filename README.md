@@ -1,3 +1,3 @@
 # NetworkManager
 
-A description of this package.
+A library to deploy all your network communications
