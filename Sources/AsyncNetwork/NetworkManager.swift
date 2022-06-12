@@ -7,24 +7,35 @@ public final class AsyncNetwork {
     ///   - url: URL used in http request
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - session:  Optional. URLSession with custom configuration
+    ///   - errorCode:  Optional. An Int status code for expected error responses
+    ///   - logData: Optiona. A boolean to print data response as string
     /// - Returns: Result with succes or failure data
     @discardableResult public static func getData<Received>(
         url: URL,
         builder: @escaping (Data) -> Received?,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        errorCode: Int?,
+        logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(from: url)
             guard let response = response as? HTTPURLResponse else {
                 return .failure(.noHTTP)
             }
-            if response.statusCode == 200 {
+            
+            if logData {
+                let dataString = String(decoding: data, as: UTF8.self)
+                print("Data response:\n \(dataString)")
+            }
+            
+            switch response.statusCode {
+            case 200...206, errorCode:
                 if let result = builder(data) {
                     return .success(result)
                 } else {
                     return .failure(.notExpectedData)
                 }
-            } else {
+            default:
                 return .failure(.statusCode(response.statusCode))
             }
         } catch {
@@ -37,25 +48,36 @@ public final class AsyncNetwork {
     ///   - url: URL used in http request
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - session:  Optional. URLSession with custom configuration
+    ///   - errorCode:  Optional. An Int status code for expected error responses
+    ///   - logData: Optiona. A boolean to print data response as string
     /// - Returns: Result with succes or failure data
     @discardableResult public static func getData<Received>(
         url: URL,
         builder: @escaping (Data) throws -> Received,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        errorCode: Int?,
+        logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(from: url)
             guard let response = response as? HTTPURLResponse else {
                 return .failure(.noHTTP)
             }
-            if response.statusCode == 200 {
+            
+            if logData {
+                let dataString = String(decoding: data, as: UTF8.self)
+                print("Data response:\n \(dataString)")
+            }
+            
+            switch response.statusCode {
+            case 200...206, errorCode:
                 do {
                     let result = try builder(data)
                     return .success(result)
                 } catch {
                     return .failure(.notExpectedData)
                 }
-            } else {
+            default:
                 return .failure(.statusCode(response.statusCode))
             }
         } catch {
@@ -68,24 +90,35 @@ public final class AsyncNetwork {
     ///   - request: A custom URLRequest
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - session:  Optional. URLSession with custom configuration
+    ///   - errorCode:  Optional. An Int status code for expected error responses
+    ///   - logData: Optiona. A boolean to print data response as string
     /// - Returns: Result with succes or failure data
     @discardableResult public static func data<Received>(
         request: URLRequest,
         builder: @escaping (Data) -> Received?,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        errorCode: Int?,
+        logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else {
                 return .failure(.noHTTP)
             }
-            if response.statusCode == 200 {
+            
+            if logData {
+                let dataString = String(decoding: data, as: UTF8.self)
+                print("Data response:\n \(dataString)")
+            }
+            
+            switch response.statusCode {
+            case 200...206, errorCode:
                 if let result = builder(data) {
                     return .success(result)
                 } else {
                     return .failure(.notExpectedData)
                 }
-            } else {
+            default:
                 return .failure(.statusCode(response.statusCode))
             }
         } catch {
@@ -98,25 +131,36 @@ public final class AsyncNetwork {
     ///   - request: A custom URLRequest
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - session:  Optional. URLSession with custom configuration
+    ///   - errorCode:  Optional. An Int status code for expected error responses
+    ///   - logData: Optiona. A boolean to print data response as string
     /// - Returns: Result with succes or failure data
     @discardableResult public static func data<Received>(
         request: URLRequest,
         builder: @escaping (Data) throws -> Received,
-        session: URLSession = .shared
+        session: URLSession = .shared,
+        errorCode: Int?,
+        logData: Bool = false
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else {
                 return .failure(.noHTTP)
             }
-            if response.statusCode == 200 {
+            
+            if logData {
+                let dataString = String(decoding: data, as: UTF8.self)
+                print("Data response:\n \(dataString)")
+            }
+            
+            switch response.statusCode {
+            case 200...206, errorCode:
                 do {
                     let result = try builder(data)
                     return .success(result)
                 } catch {
                     return .failure(.notExpectedData)
                 }
-            } else {
+            default:
                 return .failure(.statusCode(response.statusCode))
             }
         } catch {
