@@ -6,18 +6,14 @@ public final class AsyncNetwork {
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - errorCode:  Optional. An Int status code for expected error responses
     ///   - logData: Optiona. A boolean to print data response as string
     ///   - builder: A function that convert the result Data response to your expected data
-    ///   - builderError: A function that convert the result Error Data response to your expected error data
     /// - Returns: Result with succes or failure data
     @discardableResult public static func getData<Received>(
         url: URL,
         session: URLSession = .shared,
-        errorCode: Int? = nil,
         logData: Bool = false,
-        builder: @escaping (Data) throws -> Received,
-        builderError: ((Data) throws -> Received)? = nil
+        builder: @escaping (Data) throws -> Received
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(from: url)
@@ -31,10 +27,54 @@ public final class AsyncNetwork {
             }
             
             switch response.statusCode {
-            case 200...206, errorCode:
+            case 200...206:
                 do {
                     let result = try builder(data)
                     return .success(result)
+                } catch {
+                    return .failure(.notExpectedData(error))
+                }
+            default:
+                return .failure(.statusCode(response.statusCode))
+            }
+        } catch {
+            return .failure(.general(error))
+        }
+    }
+    
+    ///  Create a GET network request that throws error for no valid data responses
+    /// - Parameters:
+    ///   - url: URL used in http request
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - errorCode:  Optional. An Int status code for expected error responses
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - builder: A function that convert the result Data response to your expected data
+    ///   - builderError: A function that convert the result Error Data response to your expected error data
+    /// - Returns: Result with succes or failure data
+    @discardableResult public static func getData<Received, ErrorType>(
+        url: URL,
+        session: URLSession = .shared,
+        errorCode: Int? = nil,
+        logData: Bool = false,
+        builder: @escaping (Data) throws -> Received,
+        builderError: ((Data) throws -> ErrorType)? = nil
+    ) async -> Result<(Received?, ErrorType?), NetworkError> {
+        do {
+            let (data, response) = try await session.data(from: url)
+            guard let response = response as? HTTPURLResponse else {
+                return .failure(.noHTTP)
+            }
+            
+            if logData {
+                let dataString = String(decoding: data, as: UTF8.self)
+                print("Data response:\n \(dataString)")
+            }
+            
+            switch response.statusCode {
+            case 200...206:
+                do {
+                    let result = try builder(data)
+                    return .success((result, nil))
                 } catch {
                     return .failure(.notExpectedData(error))
                 }
@@ -44,6 +84,46 @@ public final class AsyncNetwork {
                         return .failure(.noBuilderError)
                     }
                     let result = try builderError(data)
+                    return .success((nil, result))
+                } catch {
+                    return .failure(.notExpectedData(error))
+                }
+            default:
+                return .failure(.statusCode(response.statusCode))
+            }
+        } catch {
+            return .failure(.general(error))
+        }
+    }
+    
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
+    /// - Parameters:
+    ///   - request: A custom URLRequest
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - builder: A function that convert the result Data response to your expected data
+    /// - Returns: Result with succes or failure data
+    @discardableResult public static func data<Received>(
+        request: URLRequest,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        builder: @escaping (Data) throws -> Received
+    ) async -> Result<Received, NetworkError> {
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let response = response as? HTTPURLResponse else {
+                return .failure(.noHTTP)
+            }
+            
+            if logData {
+                let dataString = String(decoding: data, as: UTF8.self)
+                print("Data response:\n \(dataString)")
+            }
+            
+            switch response.statusCode {
+            case 200...206:
+                do {
+                    let result = try builder(data)
                     return .success(result)
                 } catch {
                     return .failure(.notExpectedData(error))
@@ -65,15 +145,14 @@ public final class AsyncNetwork {
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - builderError: A function that convert the result Error Data response to your expected error data
     /// - Returns: Result with succes or failure data
-    @discardableResult public static func data<Received, T: Decodable>(
+    @discardableResult public static func data<Received, ErrorType>(
         request: URLRequest,
         session: URLSession = .shared,
         errorCode: Int? = nil,
-        errorType: T? = nil,
         logData: Bool = false,
-        builder: @escaping (Data) throws -> Received
-//        builderError: ((Data) throws -> T)? = nil
-    ) async -> Result<(Received?, T?), NetworkError> {
+        builder: @escaping (Data) throws -> Received,
+        builderError: ((Data) throws -> ErrorType)? = nil
+    ) async -> Result<(Received?, ErrorType?), NetworkError> {
         do {
             let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else {
@@ -95,15 +174,11 @@ public final class AsyncNetwork {
                 }
             case errorCode:
                 do {
-//                    guard let builderError = builderError else {
-//                        return .failure(.noBuilderError)
-//                    }
-                    guard let errType = errorType else {
+                    guard let builderError = builderError else {
                         return .failure(.noBuilderError)
                     }
-
-//                    let result = try builderError(data)
-                    let result = try JSONDecoder().decode(T.self, from: data)
+                    
+                    let result = try builderError(data)
                     return .success((nil, result))
                 } catch {
                     return .failure(.notExpectedData(error))
