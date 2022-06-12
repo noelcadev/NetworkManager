@@ -17,7 +17,7 @@ public final class AsyncNetwork {
         errorCode: Int? = nil,
         logData: Bool = false,
         builder: @escaping (Data) throws -> Received,
-        builderError: @escaping (Data) throws -> Received
+        builderError: ((Data) throws -> Received)? = nil
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(from: url)
@@ -40,6 +40,9 @@ public final class AsyncNetwork {
                 }
             case errorCode:
                 do {
+                    guard let builderError = builderError else {
+                        return .failure(.noBuilderError)
+                    }
                     let result = try builderError(data)
                     return .success(result)
                 } catch {
@@ -68,7 +71,7 @@ public final class AsyncNetwork {
         errorCode: Int? = nil,
         logData: Bool = false,
         builder: @escaping (Data) throws -> Received,
-        builderError: @escaping (Data) throws -> Received
+        builderError: ((Data) throws -> Received)? = nil
     ) async -> Result<Received, NetworkError> {
         do {
             let (data, response) = try await session.data(for: request)
@@ -91,6 +94,9 @@ public final class AsyncNetwork {
                 }
             case errorCode:
                 do {
+                    guard let builderError = builderError else {
+                        return .failure(.noBuilderError)
+                    }
                     let result = try builderError(data)
                     return .success(result)
                 } catch {
