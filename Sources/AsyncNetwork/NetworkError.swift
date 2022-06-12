@@ -14,7 +14,7 @@ public enum NetworkError:Error {
     case notExpectedData
     case unexpected
     
-    var description:String {
+    public var description:String {
         switch self {
         case .general(let error):
             return "General error: \(error)"
