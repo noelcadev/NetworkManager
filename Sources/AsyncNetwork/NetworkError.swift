@@ -7,6 +7,8 @@
 
 import Foundation
 
+
+/// Network error cases and its description
 public enum NetworkError:Error {
     case general(Error)
     case statusCode(Int)
