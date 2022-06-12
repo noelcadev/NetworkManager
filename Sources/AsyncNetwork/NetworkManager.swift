@@ -12,7 +12,7 @@ public final class AsyncNetwork {
     /// - Returns: Result with succes or failure data
     @discardableResult public static func getData<Received>(
         url: URL,
-        builder: @escaping (Data) -> Received?,
+        builder: @escaping (Data, Int) -> Received?,
         session: URLSession = .shared,
         errorCode: Int? = nil,
         logData: Bool = false
@@ -30,7 +30,7 @@ public final class AsyncNetwork {
             
             switch response.statusCode {
             case 200...206, errorCode:
-                if let result = builder(data) {
+                if let result = builder(data, response.statusCode) {
                     return .success(result)
                 } else {
                     return .failure(.notExpectedData)
@@ -53,7 +53,7 @@ public final class AsyncNetwork {
     /// - Returns: Result with succes or failure data
     @discardableResult public static func getData<Received>(
         url: URL,
-        builder: @escaping (Data) throws -> Received,
+        builder: @escaping (Data, Int) throws -> Received,
         session: URLSession = .shared,
         errorCode: Int? = nil,
         logData: Bool = false
@@ -72,7 +72,7 @@ public final class AsyncNetwork {
             switch response.statusCode {
             case 200...206, errorCode:
                 do {
-                    let result = try builder(data)
+                    let result = try builder(data, response.statusCode)
                     return .success(result)
                 } catch {
                     return .failure(.notExpectedDataWithError(error))
@@ -95,7 +95,7 @@ public final class AsyncNetwork {
     /// - Returns: Result with succes or failure data
     @discardableResult public static func data<Received>(
         request: URLRequest,
-        builder: @escaping (Data) -> Received?,
+        builder: @escaping (Data, Int) -> Received?,
         session: URLSession = .shared,
         errorCode: Int? = nil,
         logData: Bool = false
@@ -113,7 +113,7 @@ public final class AsyncNetwork {
             
             switch response.statusCode {
             case 200...206, errorCode:
-                if let result = builder(data) {
+                if let result = builder(data, response.statusCode) {
                     return .success(result)
                 } else {
                     return .failure(.notExpectedData)
@@ -136,7 +136,7 @@ public final class AsyncNetwork {
     /// - Returns: Result with succes or failure data
     @discardableResult public static func data<Received>(
         request: URLRequest,
-        builder: @escaping (Data) throws -> Received,
+        builder: @escaping (Data, Int) throws -> Received,
         session: URLSession = .shared,
         errorCode: Int? = nil,
         logData: Bool = false
@@ -155,7 +155,7 @@ public final class AsyncNetwork {
             switch response.statusCode {
             case 200...206, errorCode:
                 do {
-                    let result = try builder(data)
+                    let result = try builder(data, response.statusCode)
                     return .success(result)
                 } catch {
                     return .failure(.notExpectedDataWithError(error))
