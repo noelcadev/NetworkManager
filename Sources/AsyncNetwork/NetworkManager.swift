@@ -65,14 +65,15 @@ public final class AsyncNetwork {
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - builderError: A function that convert the result Error Data response to your expected error data
     /// - Returns: Result with succes or failure data
-    @discardableResult public static func data<Received>(
+    @discardableResult public static func data<Received, T: Decodable>(
         request: URLRequest,
         session: URLSession = .shared,
         errorCode: Int? = nil,
+        errorType: T? = nil,
         logData: Bool = false,
-        builder: @escaping (Data) throws -> Received,
-        builderError: ((Data) throws -> Received)? = nil
-    ) async -> Result<Received, NetworkError> {
+        builder: @escaping (Data) throws -> Received
+//        builderError: ((Data) throws -> T)? = nil
+    ) async -> Result<(Received?, T?), NetworkError> {
         do {
             let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else {
@@ -88,17 +89,22 @@ public final class AsyncNetwork {
             case 200...206:
                 do {
                     let result = try builder(data)
-                    return .success(result)
+                    return .success((result, nil))
                 } catch {
                     return .failure(.notExpectedData(error))
                 }
             case errorCode:
                 do {
-                    guard let builderError = builderError else {
+//                    guard let builderError = builderError else {
+//                        return .failure(.noBuilderError)
+//                    }
+                    guard let errType = errorType else {
                         return .failure(.noBuilderError)
                     }
-                    let result = try builderError(data)
-                    return .success(result)
+
+//                    let result = try builderError(data)
+                    let result = try JSONDecoder().decode(T.self, from: data)
+                    return .success((nil, result))
                 } catch {
                     return .failure(.notExpectedData(error))
                 }
