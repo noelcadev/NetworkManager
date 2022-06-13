@@ -138,7 +138,6 @@ public final class AsyncNetwork {
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optiona. A boolean to print data response as string
-    ///   - builderError: A function that convert the result Error Data response to your expected error data
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - builderError: A function that convert the result Error Data response to your expected error data
     /// - Returns: Result with succes or failure data and HTTPURLResponse
