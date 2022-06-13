@@ -26,10 +26,10 @@ If you have a data model for an expected JSON response, you can use the optional
 let register = Register(email: "hello@example.com", password: "123456")
 let request = URLRequest.registerUser(model: register)
 let (result, _) = await AsyncNetwork.data(request: request,  builder: { data in
-try JSONDecoder().decode(Register.self, from: data)
+    try JSONDecoder().decode(Register.self, from: data)
 }, builderError: { data in
-// Optional. When you expect an expected error JSON response wit a data model
-try JSONDecoder().decode(ErrorRes.self, from: data)
+    // Optional. When you expect an expected error JSON response wit a data model
+    try JSONDecoder().decode(ErrorRes.self, from: data)
 })
 ```
 
@@ -37,12 +37,12 @@ We can use an URLRequest extension. This way we can customize our request before
 
 ```swift
 static func registerUser(body: reqRegister) -> URLRequest {
-var request = URLRequest(url: .register)
-request.httpMethod = "POST"
-request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-let bodyEncoded = try? JSONEncoder().encode(body)
-request.httpBody = bodyEncoded
-return request
+    var request = URLRequest(url: .register)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    let bodyEncoded = try? JSONEncoder().encode(body)
+    request.httpBody = bodyEncoded
+    return request
 }
 ```
 
@@ -51,13 +51,13 @@ Once we have the result we can check the result success or failure and retrieve 
 ```swift
 switch result {
 case .success((let resType, let errorType)):
-if let resType = resType {
-// Use the resType data response
-} else if let errorType = errorType {
-// Use the resType data error response with expected data errors responses.
-// Optional. Only returns if you pass buildError parameter.
-}
+    if let resType = resType {
+        // Use the resType data response
+    } else if let errorType = errorType {
+        // Use the resType data error response with expected data errors responses.
+        // Optional. Only returns if you pass buildError parameter.
+    }
 case .failure(let error):
-// Manage another error cases without a data model 
+    // Manage another error cases without a data model 
 }
 ```
