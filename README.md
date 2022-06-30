@@ -18,7 +18,7 @@ To use the library you need to import
 import AsyncNetwork
 ```
 
-In this example we crete an data model object and we send through request body. Then we pass the URLRequest to **AsyncNetwork.data()** function.
+In this example we create a data model object and we send through request body. Then we pass the URLRequest to **AsyncNetwork.data()** function.
 It's necessary use **build** callback to indicate the expected data response. If you don't expect a data model and only want a **Data** type, simply use Data().
 If you have a data model for an expected JSON response, you can use the optional parameter **buildError**.
 
