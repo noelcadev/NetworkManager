@@ -141,17 +141,18 @@ public final class AsyncNetwork {
     ///   - builder: A function that convert the result Data response to your expected data
     ///   - builderError: A function that convert the result Error Data response to your expected error data
     /// - Returns: Result with succes or failure data and HTTPURLResponse
-    @discardableResult public static func data<Received, ErrorType>(
+    @discardableResult public static func request<T: Codable, E: Codable>(
         request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false,
-        builder: @escaping (Data) throws -> Received,
-        builderError: ((Data) throws -> ErrorType)? = nil
-    ) async -> (Result<(Received?, ErrorType?), NetworkError>, HTTPURLResponse?) {
+        result: T.Type?,
+        error: E.Type?
+    ) async throws ->  (T, HTTPURLResponse?) {
         do {
             let (data, response) = try await session.data(for: request)
             guard let response = response as? HTTPURLResponse else {
-                return (.failure(.noHTTP), nil)
+                throw NetworkError.noHTTP
+//                return (.failure(.noHTTP), nil)
             }
             
             if logData {
@@ -162,25 +163,36 @@ public final class AsyncNetwork {
             switch response.statusCode {
             case 200...206:
                 do {
-                    let result = try builder(data)
-                    return (.success((result, nil)), response)
+                    let decoder = JSONDecoder()
+                    decoder.keyDecodingStrategy = .convertFromSnakeCase
+                    let res = try decoder.decode(T.self, from: data)
+                    return (res, response)
+//                    let result = try builder(data)
+//                    return (.success((result, nil)), response)
                 } catch {
-                    return (.failure(.notExpectedData(error)), response)
+                    throw NetworkError.notExpectedData(error)
+//                    return (.failure(.notExpectedData(error)), response)
                 }
             default:
                 do {
-                    guard let builderError = builderError else {
-                        return (.failure(.statusCode(response.statusCode)), response)
-                    }
-                    
-                    let result = try builderError(data)
-                    return (.success((nil, result)), response)
+                    let decoder = JSONDecoder()
+                    decoder.keyDecodingStrategy = .convertFromSnakeCase
+                    let res = try decoder.decode(E.self, from: data)
+                    throw NetworkError.expectedError(res)
+
+//                    guard let builderError = builderError else {
+//                        return (.failure(.statusCode(response.statusCode)), response)
+//                    }
+//                    let result = try builderError(data)
+//                    return (.success((nil, result)), response)
                 } catch {
-                    return (.failure(.notExpectedData(error)), response)
+                    throw NetworkError.notExpectedData(error)
+//                    return (.failure(.notExpectedData(error)), response)
                 }
             }
         } catch {
-            return (.failure(.general(error)), nil)
+            throw NetworkError.general(error)
+//            return (.failure(.general(error)), nil)
         }
     }
 }

@@ -9,13 +9,14 @@ import Foundation
 
 
 /// Network error cases and its description
-public enum NetworkError:Error {
+public enum NetworkError: Error {
     case general(Error)
     case statusCode(Int)
     case noHTTP
     case notExpectedData(Error)
     case noBuilderError
-    
+    case expectedError(Any)
+
     public var description:String {
         switch self {
         case .general(let error):
@@ -28,6 +29,11 @@ public enum NetworkError:Error {
             return "Not the expected data: \(error)"
         case .noBuilderError:
             return "Must include a builderError function that converts error response to your data model"
+        case .expectedError(_):
+            return "Expected error"
+
         }
     }
+    
+    
 }
