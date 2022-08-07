@@ -121,13 +121,13 @@ public final class AsyncNetwork {
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optiona. A boolean to print data response as string
     ///   - errorType: Expected custom error type
-    /// - Returns: HTTPURLResponse
+    /// - Returns: Data and HTTPURLResponse
     @discardableResult public func getRequest<E: Codable>(
         url: URL,
         session: URLSession = .shared,
         logData: Bool = false,
         errorType: E.Type
-    ) async throws -> HTTPURLResponse {
+    ) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await requestUrl(url: url, session: session)
 
         guard let response = response as? HTTPURLResponse else {
@@ -141,7 +141,7 @@ public final class AsyncNetwork {
         
         switch response.statusCode {
         case 200...206:
-            return response
+            return (data, response)
         default:
             let res = try await decodeError(error: errorType, data: data)
             throw NetworkError.customError(res)
@@ -153,12 +153,12 @@ public final class AsyncNetwork {
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optiona. A boolean to print data response as string
-    /// - Returns: HTTPURLResponse
+    /// - Returns: Data and HTTPURLResponse
     @discardableResult public func getRequest(
         url: URL,
         session: URLSession = .shared,
         logData: Bool = false
-    ) async throws -> HTTPURLResponse {
+    ) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await requestUrl(url: url, session: session)
 
         guard let response = response as? HTTPURLResponse else {
@@ -172,7 +172,7 @@ public final class AsyncNetwork {
         
         switch response.statusCode {
         case 200...206:
-            return response
+            return (data, response)
         default:
             throw NetworkError.invalidStatusCode(response.statusCode)
         }
@@ -266,13 +266,13 @@ public final class AsyncNetwork {
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optiona. A boolean to print data response as string
     ///   - errorType: Expected custom error type
-    /// - Returns: HTTPURLResponse
+    /// - Returns: Data and HTTPURLResponse
     @discardableResult public func request<E: Codable>(
         _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false,
         errorType: E.Type
-    ) async throws -> HTTPURLResponse {
+    ) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await requestData(request: request, session: session)
 
         guard let response = response as? HTTPURLResponse else {
@@ -286,7 +286,7 @@ public final class AsyncNetwork {
         
         switch response.statusCode {
         case 200...206:
-            return response
+            return (data, response)
         default:
             let res = try await decodeError(error: errorType, data: data)
             throw NetworkError.customError(res)
@@ -298,12 +298,12 @@ public final class AsyncNetwork {
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optiona. A boolean to print data response as string
-    /// - Returns: HTTPURLResponse
+    /// - Returns: Data and HTTPURLResponse
     @discardableResult public func request(
         _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false
-    ) async throws -> HTTPURLResponse {
+    ) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await requestData(request: request, session: session)
 
         guard let response = response as? HTTPURLResponse else {
@@ -317,7 +317,7 @@ public final class AsyncNetwork {
         
         switch response.statusCode {
         case 200...206:
-            return response
+            return (data, response)
         default:
             throw NetworkError.invalidStatusCode(response.statusCode)
         }
