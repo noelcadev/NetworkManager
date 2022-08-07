@@ -1,198 +1,325 @@
 import Foundation
 
 public final class AsyncNetwork {
+    public static let shared = AsyncNetwork()
     
-    ///  Create a GET network request that throws error for no valid data responses
-    /// - Parameters:
-    ///   - url: URL used in http request
-    ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
-    ///   - builder: A function that convert the result Data response to your expected data
-    /// - Returns: Result with succes or failure data and HTTPURLResponse
-    @discardableResult public static func getData<Received>(
-        url: URL,
-        session: URLSession = .shared,
-        logData: Bool = false,
-        builder: @escaping (Data) throws -> Received
-    ) async -> (Result<Received, NetworkError>, HTTPURLResponse?) {
-        do {
-            let (data, response) = try await session.data(from: url)
-            guard let response = response as? HTTPURLResponse else {
-                return (.failure(.noHTTP), nil)
-            }
-            
-            if logData {
-                let dataString = String(decoding: data, as: UTF8.self)
-                print("Data response:\n \(dataString)")
-            }
-            
-            switch response.statusCode {
-            case 200...206:
-                do {
-                    let result = try builder(data)
-                    return (.success(result), response)
-                } catch {
-                    return (.failure(.notExpectedData(error)), response)
-                }
-            default:
-                return (.failure(.statusCode(response.statusCode)), response)
-            }
-        } catch {
-            return (.failure(.general(error)), nil)
-        }
-    }
-    
-    ///  Create a GET network request that throws error for no valid data responses
-    /// - Parameters:
-    ///   - url: URL used in http request
-    ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
-    ///   - builder: A function that convert the result Data response to your expected data
-    ///   - builderError: A function that convert the result Error Data response to your expected error data
-    /// - Returns: Result with succes or failure data and HTTPURLResponse
-    @discardableResult public static func getData<Received, ErrorType>(
-        url: URL,
-        session: URLSession = .shared,
-        logData: Bool = false,
-        builder: @escaping (Data) throws -> Received,
-        builderError: ((Data) throws -> ErrorType)? = nil
-    ) async -> (Result<(Received?, ErrorType?), NetworkError>, HTTPURLResponse?) {
-        do {
-            let (data, response) = try await session.data(from: url)
-            guard let response = response as? HTTPURLResponse else {
-                return (.failure(.noHTTP), nil)
-            }
-            
-            if logData {
-                let dataString = String(decoding: data, as: UTF8.self)
-                print("Data response:\n \(dataString)")
-            }
-            
-            switch response.statusCode {
-            case 200...206:
-                do {
-                    let result = try builder(data)
-                    return (.success((result, nil)), response)
-                } catch {
-                    return (.failure(.notExpectedData(error)), response)
-                }
-            default:
-                do {
-                    guard let builderError = builderError else {
-                        return (.failure(.statusCode(response.statusCode)), response)
-                    }
-                    
-                    let result = try builderError(data)
-                    return (.success((nil, result)), response)
-                } catch {
-                    return (.failure(.notExpectedData(error)), response)
-                }
-            }
-        } catch {
-            return (.failure(.general(error)), nil)
-        }
-    }
-    
-    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
-    /// - Parameters:
-    ///   - request: A custom URLRequest
-    ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
-    ///   - builder: A function that convert the result Data response to your expected data
-    /// - Returns: Result with succes or failure data and HTTPURLResponse
-    @discardableResult public static func data<Received>(
-        request: URLRequest,
-        session: URLSession = .shared,
-        logData: Bool = false,
-        builder: @escaping (Data) throws -> Received
-    ) async -> (Result<Received, NetworkError>, HTTPURLResponse?) {
-        do {
-            let (data, response) = try await session.data(for: request)
-            guard let response = response as? HTTPURLResponse else {
-                return (.failure(.noHTTP), nil)
-            }
-            
-            if logData {
-                let dataString = String(decoding: data, as: UTF8.self)
-                print("Data response:\n \(dataString)")
-            }
-            
-            switch response.statusCode {
-            case 200...206:
-                do {
-                    let result = try builder(data)
-                    return (.success(result), response)
-                } catch {
-                    return (.failure(.notExpectedData(error)), response)
-                }
-            default:
-                return (.failure(.statusCode(response.statusCode)), response)
-            }
-        } catch {
-            return (.failure(.general(error)), nil)
-        }
-    }
-    
-    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
-    /// - Parameters:
-    ///   - request: A custom URLRequest
-    ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
-    ///   - builder: A function that convert the result Data response to your expected data
-    ///   - builderError: A function that convert the result Error Data response to your expected error data
-    /// - Returns: Result with succes or failure data and HTTPURLResponse
-    @discardableResult public static func request<T: Codable, E: Codable>(
-        request: URLRequest,
-        session: URLSession = .shared,
-        logData: Bool = false,
-        result: T.Type?,
-        error: E.Type?
-    ) async throws ->  (T, HTTPURLResponse?) {
-        do {
-            let (data, response) = try await session.data(for: request)
-            guard let response = response as? HTTPURLResponse else {
-                throw NetworkError.noHTTP
-//                return (.failure(.noHTTP), nil)
-            }
-            
-            if logData {
-                let dataString = String(decoding: data, as: UTF8.self)
-                print("Data response:\n \(dataString)")
-            }
-            
-            switch response.statusCode {
-            case 200...206:
-                do {
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-                    let res = try decoder.decode(T.self, from: data)
-                    return (res, response)
-//                    let result = try builder(data)
-//                    return (.success((result, nil)), response)
-                } catch {
-                    throw NetworkError.notExpectedData(error)
-//                    return (.failure(.notExpectedData(error)), response)
-                }
-            default:
-                do {
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-                    let res = try decoder.decode(E.self, from: data)
-                    throw NetworkError.expectedError(res)
+    private init() { }
 
-//                    guard let builderError = builderError else {
-//                        return (.failure(.statusCode(response.statusCode)), response)
-//                    }
-//                    let result = try builderError(data)
-//                    return (.success((nil, result)), response)
-                } catch {
-                    throw NetworkError.notExpectedData(error)
-//                    return (.failure(.notExpectedData(error)), response)
-                }
-            }
+    private func requestUrl(url: URL, session: URLSession) async throws -> (Data, URLResponse) {
+        do {
+            let (data, response) = try await session.data(from: url)
+            return (data, response)
         } catch {
             throw NetworkError.general(error)
-//            return (.failure(.general(error)), nil)
+        }
+    }
+    
+    private func requestData(request: URLRequest, session: URLSession) async throws -> (Data, URLResponse) {
+        do {
+            let (data, response) = try await session.data(for: request)
+            return (data, response)
+        } catch {
+            throw NetworkError.general(error)
+        }
+    }
+    
+    private func decodeError<E: Codable>(error: E.Type, data: Data) async throws -> (E) {
+        do {
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            let res = try decoder.decode(E.self, from: data)
+            return res
+        } catch {
+            throw NetworkError.invalidData(error)
+        }
+    }
+    
+    ///  Create a GET network request that throws error for no valid data responses. Result and error types parameters.
+    /// - Parameters:
+    ///   - url: URL used in http request
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - resultType: Expected result type
+    ///   - errorType: Expected custom error type
+    /// - Returns: Expected result type and HTTPURLResponse
+    @discardableResult public func getRequest<T: Codable, E: Codable>(
+        url: URL,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        resultType: T.Type,
+        errorType: E.Type
+    ) async throws -> (T, HTTPURLResponse) {
+        let (data, response) = try await requestUrl(url: url, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let res = try decoder.decode(resultType, from: data)
+                return (res, response)
+            } catch {
+                throw NetworkError.invalidData(error)
+            }
+        default:
+            let res = try await decodeError(error: errorType, data: data)
+            throw NetworkError.customError(res)
+        }
+    }
+    
+    ///  Create a GET network request that throws error for no valid data responses.  No error type parameter.
+    /// - Parameters:
+    ///   - url: URL used in http request
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - resultType: Expected result type
+    /// - Returns: Expected result type and HTTPURLResponse
+    @discardableResult public func getRequest<T: Codable>(
+        url: URL,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        resultType: T.Type
+    ) async throws -> (T, HTTPURLResponse) {
+        let (data, response) = try await requestUrl(url: url, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let res = try decoder.decode(resultType, from: data)
+                return (res, response)
+            } catch {
+                throw NetworkError.invalidData(error)
+            }
+        default:
+            throw NetworkError.invalidStatusCode(response.statusCode)
+        }
+    }
+    
+    ///  Create a GET network request that throws error for no valid data responses. No result type parameter.
+    /// - Parameters:
+    ///   - url: URL used in http request
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - errorType: Expected custom error type
+    /// - Returns: HTTPURLResponse
+    @discardableResult public func getRequest<E: Codable>(
+        url: URL,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        errorType: E.Type
+    ) async throws -> HTTPURLResponse {
+        let (data, response) = try await requestUrl(url: url, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            return response
+        default:
+            let res = try await decodeError(error: errorType, data: data)
+            throw NetworkError.customError(res)
+        }
+    }
+    
+    ///  Create a GET network request that throws error for no valid data responses.  No result and error types parameters.
+    /// - Parameters:
+    ///   - url: URL used in http request
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    /// - Returns: HTTPURLResponse
+    @discardableResult public func getRequest(
+        url: URL,
+        session: URLSession = .shared,
+        logData: Bool = false
+    ) async throws -> HTTPURLResponse {
+        let (data, response) = try await requestUrl(url: url, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            return response
+        default:
+            throw NetworkError.invalidStatusCode(response.statusCode)
+        }
+    }
+    
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. Result and error types parameters.
+    /// - Parameters:
+    ///   - request: A custom URLRequest
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - resultType: Expected result type
+    ///   - errorType: Expected custom error type
+    /// - Returns: Expected result type and HTTPURLResponse
+    @discardableResult public func request<T: Codable, E: Codable>(
+        request: URLRequest,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        resultType: T.Type,
+        errorType: E.Type
+    ) async throws -> (T, HTTPURLResponse) {
+        let (data, response) = try await requestData(request: request, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let res = try decoder.decode(resultType, from: data)
+                return (res, response)
+            } catch {
+                throw NetworkError.invalidData(error)
+            }
+        default:
+            let res = try await decodeError(error: errorType, data: data)
+            throw NetworkError.customError(res)
+        }
+    }
+    
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No error type parameter.
+    /// - Parameters:
+    ///   - request: A custom URLRequest
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - resultType: Expected result type
+    ///   - errorType: Expected custom error type
+    /// - Returns: Expected result type and HTTPURLResponse
+    @discardableResult public func request<T: Codable>(
+        request: URLRequest,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        resultType: T.Type
+    ) async throws -> (T, HTTPURLResponse) {
+        let (data, response) = try await requestData(request: request, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            do {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let res = try decoder.decode(resultType, from: data)
+                return (res, response)
+            } catch {
+                throw NetworkError.invalidData(error)
+            }
+        default:
+            throw NetworkError.invalidStatusCode(response.statusCode)
+        }
+    }
+    
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No result type parameter.
+    /// - Parameters:
+    ///   - request: A custom URLRequest
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - errorType: Expected custom error type
+    /// - Returns: HTTPURLResponse
+    @discardableResult public func request<E: Codable>(
+        request: URLRequest,
+        session: URLSession = .shared,
+        logData: Bool = false,
+        errorType: E.Type
+    ) async throws -> HTTPURLResponse {
+        let (data, response) = try await requestData(request: request, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            return response
+        default:
+            let res = try await decodeError(error: errorType, data: data)
+            throw NetworkError.customError(res)
+        }
+    }
+    
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No result and error types parameters.
+    /// - Parameters:
+    ///   - request: A custom URLRequest
+    ///   - session:  Optional. URLSession with custom configuration
+    ///   - logData: Optiona. A boolean to print data response as string
+    /// - Returns: HTTPURLResponse
+    @discardableResult public func request(
+        request: URLRequest,
+        session: URLSession = .shared,
+        logData: Bool = false
+    ) async throws -> HTTPURLResponse {
+        let (data, response) = try await requestData(request: request, session: session)
+
+        guard let response = response as? HTTPURLResponse else {
+            throw NetworkError.invalidRequest
+        }
+        
+        if logData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            print("Data response:\n \(dataString)")
+        }
+        
+        switch response.statusCode {
+        case 200...206:
+            return response
+        default:
+            throw NetworkError.invalidStatusCode(response.statusCode)
         }
     }
 }

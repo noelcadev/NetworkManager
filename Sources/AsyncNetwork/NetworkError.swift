@@ -9,29 +9,25 @@ import Foundation
 
 
 /// Network error cases and its description
-public enum NetworkError: Error {
+public enum NetworkError: Error, LocalizedError {
     case general(Error)
-    case statusCode(Int)
-    case noHTTP
-    case notExpectedData(Error)
-    case noBuilderError
-    case expectedError(Any)
+    case invalidStatusCode(Int)
+    case invalidRequest
+    case invalidData(Error)
+    case customError(Any)
 
-    public var description:String {
+    public var errorDescription: String? {
         switch self {
         case .general(let error):
             return "General error: \(error)"
-        case .statusCode(let status):
+        case .invalidStatusCode(let status):
             return "Status error: \(status)"
-        case .noHTTP:
+        case .invalidRequest:
             return "Not a valid HTTP request"
-        case .notExpectedData(let error):
+        case .invalidData(let error):
             return "Not the expected data: \(error)"
-        case .noBuilderError:
-            return "Must include a builderError function that converts error response to your data model"
-        case .expectedError(_):
-            return "Expected error"
-
+        case .customError(_):
+            return "Custom error"
         }
     }
     
