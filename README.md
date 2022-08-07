@@ -18,20 +18,24 @@ To use the library you need to import
 import AsyncNetwork
 ```
 
-In this example we create a data model object and we send through request body. Then we pass the URLRequest to **AsyncNetwork.data()** function.
-It's necessary use **build** callback to indicate the expected data response. If you don't expect a data model and only want a **Data** type, simply use Data().
-If you have a data model for an expected JSON response, you can use the optional parameter **buildError**.
+In this example we create a data model object and we send through request body. Then we pass the URLRequest to **AsyncNetwork.shared.request()** function.
+It's necessary use **resultType** parameter to indicate the expected type response. If you don't expect a data model and only want a **Data** type, simply don't use this parameter.
+If you have a data model for an expected error response, you can use the parameter **errorType**.
 
 ```swift
 let register = Register(email: "hello@example.com", password: "123456")
-let request = URLRequest.registerUser(model: register)
-let (result, _) = await AsyncNetwork.data(request: request,  builder: { data in
-    try JSONDecoder().decode(Register.self, from: data)
-}, builderError: { data in
-    // Optional. When you expect an expected error JSON response wit a data model
-    try JSONDecoder().decode(ErrorRes.self, from: data)
-})
+let request = URLRequest.registerUser(body: register)
+do {
+    let (result, _) = try await AsyncNetwork.shared.request(request, resultType: Register.self, errorType: ErrorRes.self)
+    print("success: \(result)")
+} catch NetworkError.customError(let error as ErrorRes) {
+    print("Custom Error: \(error.message)")
+} catch {
+    print(error.localizedDescription)
+}
 ```
+
+The functions are throws type. If we want to collect the errors we must use do-try-catch. Errors are of type NetworkError.
 
 We can use an URLRequest extension. This way we can customize our request before before making the HTTP request.
 
@@ -43,21 +47,5 @@ static func registerUser(body: reqRegister) -> URLRequest {
     let bodyEncoded = try? JSONEncoder().encode(body)
     request.httpBody = bodyEncoded
     return request
-}
-```
-
-Once we have the result we can check the result success or failure and retrieve the data response.
-
-```swift
-switch result {
-case .success((let resType, let errorType)):
-    if let resType = resType {
-        // Use the resType data response
-    } else if let errorType = errorType {
-        // Use the resType data error response with expected data errors responses.
-        // Optional. Only returns if you pass buildError parameter.
-    }
-case .failure(let error):
-    // Manage another error cases without a data model 
 }
 ```
