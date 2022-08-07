@@ -19,12 +19,12 @@ import AsyncNetwork
 ```
 
 In this example we create a data model object and we send through request body. Then we pass the URLRequest to **AsyncNetwork.shared.request()** function.
-It's necessary use **resultType** parameter to indicate the expected type response. If you don't expect a data model and only want a **Data** type, simply don't use this parameter.
-If you have a data model for an expected error response, you can use the parameter **errorType**.
+It's necessary use **resultType** parameter to indicate the expected type response (Using Codable). If you don't expect a Codable data model and only want a **Data** type, simply don't use this parameter.
+If you have a Codable data model for an expected error response, you can use the parameter **errorType**.
 
 ```swift
-let register = Register(email: "hello@example.com", password: "123456")
-let request = URLRequest.registerUser(body: register)
+let body = RegisterBody(email: "hello@example.com", password: "123456")
+let request = URLRequest.registerUser(body: body)
 do {
     let (result, _) = try await AsyncNetwork.shared.request(request, resultType: Register.self, errorType: ErrorRes.self)
     print("success: \(result)")
