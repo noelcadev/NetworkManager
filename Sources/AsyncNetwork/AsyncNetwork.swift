@@ -187,7 +187,7 @@ public final class AsyncNetwork {
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
     @discardableResult public func request<T: Codable, E: Codable>(
-        request: URLRequest,
+        _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false,
         resultType: T.Type,
@@ -229,7 +229,7 @@ public final class AsyncNetwork {
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
     @discardableResult public func request<T: Codable>(
-        request: URLRequest,
+        _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false,
         resultType: T.Type
@@ -268,7 +268,7 @@ public final class AsyncNetwork {
     ///   - errorType: Expected custom error type
     /// - Returns: HTTPURLResponse
     @discardableResult public func request<E: Codable>(
-        request: URLRequest,
+        _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false,
         errorType: E.Type
@@ -300,7 +300,7 @@ public final class AsyncNetwork {
     ///   - logData: Optiona. A boolean to print data response as string
     /// - Returns: HTTPURLResponse
     @discardableResult public func request(
-        request: URLRequest,
+        _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false
     ) async throws -> HTTPURLResponse {
