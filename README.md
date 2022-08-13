@@ -28,6 +28,8 @@ let request = URLRequest.registerUser(body: body)
 do {
     let (result, _) = try await AsyncNetwork.shared.request(request, resultType: Register.self, errorType: ErrorRes.self)
     print("success: \(result)")
+} catch NetworkError.invalidStatusCode(let code) {
+    print("Status code error: \(code)")
 } catch NetworkError.customError(let error as ErrorRes) {
     print("Custom Error: \(error.message)")
 } catch {

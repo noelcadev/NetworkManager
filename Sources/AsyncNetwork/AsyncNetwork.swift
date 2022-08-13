@@ -23,14 +23,14 @@ public final class AsyncNetwork {
         }
     }
     
-    private func decodeError<E: Codable>(error: E.Type, data: Data) async throws -> (E) {
+    private func decodeError<E: Codable>(error: E.Type, data: Data, code: Int) async throws -> (E) {
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             let res = try decoder.decode(E.self, from: data)
             return res
         } catch {
-            throw NetworkError.invalidData(error)
+            throw NetworkError.invalidStatusCode(code)
         }
     }
     
@@ -71,7 +71,7 @@ public final class AsyncNetwork {
                 throw NetworkError.invalidData(error)
             }
         default:
-            let res = try await decodeError(error: errorType, data: data)
+            let res = try await decodeError(error: errorType, data: data, code: response.statusCode)
             throw NetworkError.customError(res)
         }
     }
@@ -143,7 +143,7 @@ public final class AsyncNetwork {
         case 200...206:
             return (data, response)
         default:
-            let res = try await decodeError(error: errorType, data: data)
+            let res = try await decodeError(error: errorType, data: data, code: response.statusCode)
             throw NetworkError.customError(res)
         }
     }
@@ -215,7 +215,7 @@ public final class AsyncNetwork {
                 throw NetworkError.invalidData(error)
             }
         default:
-            let res = try await decodeError(error: errorType, data: data)
+            let res = try await decodeError(error: errorType, data: data, code: response.statusCode)
             throw NetworkError.customError(res)
         }
     }
@@ -288,7 +288,7 @@ public final class AsyncNetwork {
         case 200...206:
             return (data, response)
         default:
-            let res = try await decodeError(error: errorType, data: data)
+            let res = try await decodeError(error: errorType, data: data, code: response.statusCode)
             throw NetworkError.customError(res)
         }
     }
