@@ -1,12 +1,11 @@
 //
 //  NetworkError.swift
-//  
+//
 //
 //  Created by Noel Conde Algarra on 12/6/22.
 //
 
 import Foundation
-
 
 /// Network error cases and its description
 public enum NetworkError: Error, LocalizedError {
@@ -18,18 +17,16 @@ public enum NetworkError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .general(let error):
+        case let .general(error):
             return "General error: \(error)"
-        case .invalidStatusCode(let status):
+        case let .invalidStatusCode(status):
             return "Status error: \(status)"
         case .invalidRequest:
             return "Not a valid HTTP request"
-        case .invalidData(let error):
+        case let .invalidData(error):
             return "Not the expected data: \(error)"
-        case .customError(_):
+        case .customError:
             return "Custom error"
         }
     }
-    
-    
 }

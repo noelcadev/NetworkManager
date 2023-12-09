@@ -1,6 +1,6 @@
 //
 //  URLSession.swift
-//  
+//
 //
 //  Created by Noel Conde Algarra on 12/6/22.
 //
@@ -17,14 +17,14 @@ extension URLSession {
                     let error = error ?? URLError(.badServerResponse)
                     return continuation.resume(throwing: error)
                 }
-                
+
                 continuation.resume(returning: (data, response))
             }
-            
+
             task.resume()
         }
     }
-    
+
     @available(iOS, deprecated: 15.0, message: "This extension is no longer necessary. Use API built into SDK")
     @available(macOS, deprecated: 12.0, message: "This extension is no longer necessary. Use API built into SDK")
     func data(for request: URLRequest) async throws -> (Data, URLResponse) {
@@ -34,10 +34,10 @@ extension URLSession {
                     let error = error ?? URLError(.badServerResponse)
                     return continuation.resume(throwing: error)
                 }
-                
+
                 continuation.resume(returning: (data, response))
             }
-            
+
             task.resume()
         }
     }

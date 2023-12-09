@@ -6,16 +6,17 @@ import PackageDescription
 let package = Package(
     name: "NetworkManager",
     platforms: [
-        .macOS(.v10_15),
+        .macOS(.v11),
         .iOS(.v13),
         .watchOS(.v6),
-        .tvOS(.v13)
+        .tvOS(.v13),
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "NetworkManager",
-            targets: ["AsyncNetwork"])
+            targets: ["AsyncNetwork"]
+        ),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -26,6 +27,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "AsyncNetwork",
-            dependencies: []),
+            dependencies: []
+        ),
     ]
 )

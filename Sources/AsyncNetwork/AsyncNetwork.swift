@@ -1,9 +1,13 @@
 import Foundation
+import OSLog
 
 public final class AsyncNetwork {
     public static let shared = AsyncNetwork()
-    
-    private init() { }
+    public static let isReleaseLogging = false
+
+    // MARK: Private methods
+
+    private init() {}
 
     private func requestUrl(url: URL, session: URLSession) async throws -> (Data, URLResponse) {
         do {
@@ -13,7 +17,7 @@ public final class AsyncNetwork {
             throw NetworkError.general(error)
         }
     }
-    
+
     private func requestData(request: URLRequest, session: URLSession) async throws -> (Data, URLResponse) {
         do {
             let (data, response) = try await session.data(for: request)
@@ -22,8 +26,8 @@ public final class AsyncNetwork {
             throw NetworkError.general(error)
         }
     }
-    
-    private func decodeError<E: Codable>(error: E.Type, data: Data, code: Int) async throws -> (E) {
+
+    private func decodeError<E: Codable>(error _: E.Type, data: Data, code: Int) async throws -> (E) {
         do {
             let decoder = JSONDecoder()
             decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -34,11 +38,27 @@ public final class AsyncNetwork {
         }
     }
     
+    private func registerData(_ data: Data, isLogginData: Bool) {
+        if isLogginData {
+            let dataString = String(decoding: data, as: UTF8.self)
+            
+            #if DEBUG
+            Logger.network.debug("Data response:\n \(dataString)")
+            #else
+            if isReleaseLogging {
+                Logger.network.info("Data response:\n \(dataString)")
+            }
+            #endif
+        }
+    }
+
+    // MARK: Public methods
+
     ///  Create a GET network request that throws error for no valid data responses. Result and error types parameters.
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     ///   - resultType: Expected result type
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
@@ -54,14 +74,11 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -75,12 +92,12 @@ public final class AsyncNetwork {
             throw NetworkError.customError(res)
         }
     }
-    
+
     ///  Create a GET network request that throws error for no valid data responses.  No error type parameter.
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     ///   - resultType: Expected result type
     /// - Returns: Expected result type and HTTPURLResponse
     @discardableResult public func getRequest<T: Codable>(
@@ -94,14 +111,11 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -114,12 +128,12 @@ public final class AsyncNetwork {
             throw NetworkError.invalidStatusCode(response.statusCode)
         }
     }
-    
+
     ///  Create a GET network request that throws error for no valid data responses. No result type parameter.
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     ///   - errorType: Expected custom error type
     /// - Returns: Data and HTTPURLResponse
     @discardableResult public func getRequest<E: Codable>(
@@ -133,26 +147,23 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             return (data, response)
         default:
             let res = try await decodeError(error: errorType, data: data, code: response.statusCode)
             throw NetworkError.customError(res)
         }
     }
-    
+
     ///  Create a GET network request that throws error for no valid data responses.  No result and error types parameters.
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     /// - Returns: Data and HTTPURLResponse
     @discardableResult public func getRequest(
         url: URL,
@@ -164,25 +175,22 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             return (data, response)
         default:
             throw NetworkError.invalidStatusCode(response.statusCode)
         }
     }
-    
+
     ///  Create a network request with a custom URLRequest that throws error for no valid data responses. Result and error types parameters.
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     ///   - resultType: Expected result type
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
@@ -198,14 +206,11 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -219,12 +224,12 @@ public final class AsyncNetwork {
             throw NetworkError.customError(res)
         }
     }
-    
+
     ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No error type parameter.
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     ///   - resultType: Expected result type
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
@@ -239,14 +244,11 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -259,12 +261,12 @@ public final class AsyncNetwork {
             throw NetworkError.invalidStatusCode(response.statusCode)
         }
     }
-    
+
     ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No result type parameter.
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     ///   - errorType: Expected custom error type
     /// - Returns: Data and HTTPURLResponse
     @discardableResult public func request<E: Codable>(
@@ -278,26 +280,23 @@ public final class AsyncNetwork {
         guard let response = response as? HTTPURLResponse else {
             throw NetworkError.invalidRequest
         }
-        
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             return (data, response)
         default:
             let res = try await decodeError(error: errorType, data: data, code: response.statusCode)
             throw NetworkError.customError(res)
         }
     }
-    
+
     ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No result and error types parameters.
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
-    ///   - logData: Optiona. A boolean to print data response as string
+    ///   - logData: Optional. A boolean to print data response as string
     /// - Returns: Data and HTTPURLResponse
     @discardableResult public func request(
         _ request: URLRequest,
@@ -310,13 +309,10 @@ public final class AsyncNetwork {
             throw NetworkError.invalidRequest
         }
         
-        if logData {
-            let dataString = String(decoding: data, as: UTF8.self)
-            print("Data response:\n \(dataString)")
-        }
-        
+        registerData(data, isLogginData: logData)
+
         switch response.statusCode {
-        case 200...206:
+        case 200 ... 206:
             return (data, response)
         default:
             throw NetworkError.invalidStatusCode(response.statusCode)
