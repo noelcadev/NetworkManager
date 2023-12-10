@@ -61,17 +61,17 @@ static func registerUser(body: reqRegister) -> URLRequest {
 Also we can create the request easier with the NetworkUtils class using the function **createRequest**. This function constructs a `URLRequest` using the provided URL, HTTP method, and body. The body of the request is encoded as JSON. This function is generic and can be used with any type that conforms to `Codable`. It can throw an error if encoding the body to JSON fails.
 
 ```swift
-    let register = reqRegister(email: "eve.holt@reqres.in", password: "pistol")
+let register = reqRegister(email: "eve.holt@reqres.in", password: "pistol")
 
-    do {
-        let request = try NetworkUtils.createRequest(url: .register, body: register, method: .post)
-        let (result, _): (Register, _) = try await AsyncNetwork.shared.request(request, logData: true, errorType: ErrorRes.self)
-        print("success: \(result)")
-    } catch NetworkError.customError(let error as ErrorRes) {
-        print("Custom Error: \(error.error)")
-    } catch {
-        print(error.localizedDescription)
-    }
+do {
+    let request = try NetworkUtils.createRequest(url: .register, body: register, method: .post)
+    let (result, _): (Register, _) = try await AsyncNetwork.shared.request(request, logData: true, errorType: ErrorRes.self)
+    print("success: \(result)")
+} catch NetworkError.customError(let error as ErrorRes) {
+    print("Custom Error: \(error.error)")
+} catch {
+    print(error.localizedDescription)
+}
 ```
 
  
