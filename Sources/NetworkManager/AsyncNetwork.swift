@@ -54,19 +54,17 @@ public final class AsyncNetwork {
 
     // MARK: Public methods
 
-    ///  Create a GET network request that throws error for no valid data responses. Result and error types parameters.
+    ///  Create a GET network request that throws error for no valid data responses
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optional. A boolean to print data response as string
-    ///   - resultType: Expected result type
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
-    @discardableResult public func getRequest<T: Codable, E: Codable>(
+    @discardableResult public func get<T: Codable, E: Codable>(
         url: URL,
         session: URLSession = .shared,
         logData: Bool = false,
-        resultType: T.Type,
         errorType: E.Type
     ) async throws -> (T, HTTPURLResponse) {
         let (data, response) = try await requestUrl(url: url, session: session)
@@ -82,7 +80,7 @@ public final class AsyncNetwork {
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
-                let res = try decoder.decode(resultType, from: data)
+                let res = try decoder.decode(T.self, from: data)
                 return (res, response)
             } catch {
                 throw NetworkError.invalidData(error)
@@ -93,18 +91,16 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a GET network request that throws error for no valid data responses.  No error type parameter.
+    ///  Create a GET network request that throws error for no valid data responses
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optional. A boolean to print data response as string
-    ///   - resultType: Expected result type
     /// - Returns: Expected result type and HTTPURLResponse
-    @discardableResult public func getRequest<T: Codable>(
+    @discardableResult public func get<T: Codable>(
         url: URL,
         session: URLSession = .shared,
-        logData: Bool = false,
-        resultType: T.Type
+        logData: Bool = false
     ) async throws -> (T, HTTPURLResponse) {
         let (data, response) = try await requestUrl(url: url, session: session)
 
@@ -119,7 +115,7 @@ public final class AsyncNetwork {
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
-                let res = try decoder.decode(resultType, from: data)
+                let res = try decoder.decode(T.self, from: data)
                 return (res, response)
             } catch {
                 throw NetworkError.invalidData(error)
@@ -129,14 +125,14 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a GET network request that throws error for no valid data responses. No result type parameter.
+    ///  Create a GET network request that throws error for no valid data responses
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optional. A boolean to print data response as string
     ///   - errorType: Expected custom error type
     /// - Returns: Data and HTTPURLResponse
-    @discardableResult public func getRequest<E: Codable>(
+    @discardableResult public func get<E: Codable>(
         url: URL,
         session: URLSession = .shared,
         logData: Bool = false,
@@ -159,13 +155,13 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a GET network request that throws error for no valid data responses.  No result and error types parameters.
+    ///  Create a GET network request that throws error for no valid data responses
     /// - Parameters:
     ///   - url: URL used in http request
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optional. A boolean to print data response as string
     /// - Returns: Data and HTTPURLResponse
-    @discardableResult public func getRequest(
+    @discardableResult public func get(
         url: URL,
         session: URLSession = .shared,
         logData: Bool = false
@@ -186,19 +182,17 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. Result and error types parameters.
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optional. A boolean to print data response as string
-    ///   - resultType: Expected result type
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
     @discardableResult public func request<T: Codable, E: Codable>(
         _ request: URLRequest,
         session: URLSession = .shared,
         logData: Bool = false,
-        resultType: T.Type,
         errorType: E.Type
     ) async throws -> (T, HTTPURLResponse) {
         let (data, response) = try await requestData(request: request, session: session)
@@ -214,7 +208,7 @@ public final class AsyncNetwork {
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
-                let res = try decoder.decode(resultType, from: data)
+                let res = try decoder.decode(T.self, from: data)
                 return (res, response)
             } catch {
                 throw NetworkError.invalidData(error)
@@ -225,19 +219,17 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No error type parameter.
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
     ///   - logData: Optional. A boolean to print data response as string
-    ///   - resultType: Expected result type
     ///   - errorType: Expected custom error type
     /// - Returns: Expected result type and HTTPURLResponse
     @discardableResult public func request<T: Codable>(
         _ request: URLRequest,
         session: URLSession = .shared,
-        logData: Bool = false,
-        resultType: T.Type
+        logData: Bool = false
     ) async throws -> (T, HTTPURLResponse) {
         let (data, response) = try await requestData(request: request, session: session)
 
@@ -252,7 +244,7 @@ public final class AsyncNetwork {
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
-                let res = try decoder.decode(resultType, from: data)
+                let res = try decoder.decode(T.self, from: data)
                 return (res, response)
             } catch {
                 throw NetworkError.invalidData(error)
@@ -262,7 +254,7 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No result type parameter.
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
@@ -292,7 +284,7 @@ public final class AsyncNetwork {
         }
     }
 
-    ///  Create a network request with a custom URLRequest that throws error for no valid data responses. No result and error types parameters.
+    ///  Create a network request with a custom URLRequest that throws error for no valid data responses
     /// - Parameters:
     ///   - request: A custom URLRequest
     ///   - session:  Optional. URLSession with custom configuration
